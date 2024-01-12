@@ -108,8 +108,12 @@ class Lap_Data:
         self.frames_pos = F(self.frames_time)
 
         ## calculate the speed during the frames
-        speed = np.diff(self.frames_pos) * self.speed_factor / self.dt_imaging # cm / s       
-        speed_first = 2 * speed[0] - speed[1] # linear extrapolation: x1 - (x2 - x1)
+        speed = np.diff(self.frames_pos) * self.speed_factor / self.dt_imaging # cm / s
+        try:
+            speed_first = 2 * speed[0] - speed[1] # linear extrapolation: x1 - (x2 - x1)
+            
+        except IndexError:
+            speed_first = np.nan
         self.frames_speed = np.hstack([speed_first, speed])
 
         ##################################################################################
