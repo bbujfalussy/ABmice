@@ -638,7 +638,7 @@ class Read_Mouse:
         self.task = task
 
         input_path = data_dir + '/data/' + self.name + '/' + self.name + '_' + self.task + '.pkl'
-        print (input_path)
+        # print (input_path)
         
         if (os.path.exists(input_path)):
             input_file = open(input_path, 'rb')
