@@ -2275,7 +2275,7 @@ class ImagingSessionData:
                             speed_matrix[i_lap,:] =  np.nan
                         i_lap = i_lap + 1
                     maxspeed = min(maxspeed, 60)
-                    P_correct = np.round(np.float(n_correct) / np.float(n_valid), 3)
+                    P_correct = np.round(float(n_correct) / float(n_valid), 3)
 
                     if (average):
                         avespeed = nan_divide(avespeed, n_lap_bins, n_lap_bins > 0)
