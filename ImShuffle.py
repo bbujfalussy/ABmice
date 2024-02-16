@@ -107,12 +107,14 @@ class ImShuffle:
             self.frame_period = np.median(np.diff(self.frame_times))
             self.frame_pos = np.mean(frame_pos[0:Nmax].reshape(N_frames_new, 100), axis=1)
             self.frame_laps = np.mean(frame_laps[0:Nmax].reshape(N_frames_new, 100), axis=1)
+            self.frame_rate = int(np.ceil(1/self.frame_period))
         else :
             self.raw_spikes = raw_spikes
             self.frame_times = frame_times
             self.frame_pos = frame_pos
             self.frame_laps = frame_laps
             self.frame_period = np.median(np.diff(self.frame_times))
+            self.frame_rate = int(np.ceil(1/self.frame_period))
 
         self.N_cells = self.raw_spikes.shape[0]
         if (cellids.size != self.N_cells):
@@ -372,6 +374,11 @@ class ImShuffle:
         lap_count = 0 # counting all laps except grey zone
         N_0lap = 0 # counting the non-valid laps
 
+        if self.elfiz:
+            imaging_min_position = 200 # every valid lap has to have a position corresponding to a frame that is lower than this at the begining (end also checked)
+        else:
+            imaging_min_position = self.corridor_length_roxel/(7/8*self.frame_rate) # every valid lap has to have a position corresponding to a frame that is lower than this at the begining (end also checked)
+
 
         for i_lap in np.unique(lap):
             y = np.flatnonzero(lap == i_lap) # index for the current lap
@@ -454,10 +461,10 @@ class ImShuffle:
                         lap_frames_spikes = self.shuffle_spikes[:,iframes,:]
                         lap_frames_time = self.frame_times[iframes]
                         lap_frames_pos = self.frame_pos[iframes]
-                        if (np.min(lap_frames_pos) > 200):
+                        if (np.min(lap_frames_pos) > imaging_min_position):
                             add_ImLap = False
                             print('Late-start lap found, first position:', np.min(lap_frames_pos), 'in lap', self.n_laps, 'in corridor', corridor)
-                        if (np.max(lap_frames_pos) < (self.corridor_length_roxel - 200)):
+                        if (np.max(lap_frames_pos) < (self.corridor_length_roxel - imaging_min_position)):
                             add_ImLap = False
                             print('Early end lap found, last position:', np.max(lap_frames_pos), 'in lap', self.n_laps, 'in corridor', corridor)
                     else:

@@ -500,17 +500,17 @@ class ImagingSessionData:
         self.cell_baselines = np.zeros(self.N_cells) # a vector with the baseline F of the cells
 
         ## to calculate the SD and SNR, we need baseline periods with no spikes for at least 1 sec
-        frame_rate = int(np.ceil(1/self.frame_period))
+        self.frame_rate = int(np.ceil(1/self.frame_period))
         sp_threshold = 20 # 
         T_after_spike = 3 #s 
         T_before_spike = 0.5 #s 
         Tmin_no_spike = 1 #s 
-        L_after_spike = int(round(T_after_spike  * frame_rate))
-        L_before_spike = int(round(T_before_spike  * frame_rate))
-        Lmin_no_spike = int(round(Tmin_no_spike * frame_rate ))
+        L_after_spike = int(round(T_after_spike  * self.frame_rate))
+        L_before_spike = int(round(T_before_spike  * self.frame_rate))
+        Lmin_no_spike = int(round(Tmin_no_spike * self.frame_rate ))
 
         N_frames = len(self.frame_times) 
-        filt = np.ones(frame_rate)
+        filt = np.ones(self.frame_rate)
 
         #calculate baseline
         for i_cell in range(self.N_cells):
@@ -533,7 +533,7 @@ class ImagingSessionData:
             # cells[0] = 4
             # cells[5] = 1064
 
-            allspikes_1s = np.hstack([np.repeat(sp_threshold, frame_rate-1), np.convolve(self.raw_spks[i_cell,:], filt, mode='valid')])
+            allspikes_1s = np.hstack([np.repeat(sp_threshold, self.frame_rate-1), np.convolve(self.raw_spks[i_cell,:], filt, mode='valid')])
 
             ### 1.2 no spikes if the sum remains smaller than sp_threshold
             sp_1s = np.copy(allspikes_1s)
@@ -750,7 +750,11 @@ class ImagingSessionData:
             # print('grey zone is active')
             # grey_zone_duration = []
             # correct_error = []
-
+        if self.elfiz:
+            imaging_min_position = 200 # every valid lap has to have a position corresponding to a frame that is lower than this at the begining (end also checked)
+        else:
+            imaging_min_position = self.corridor_length_roxel/(7/8*self.frame_rate) # every valid lap has to have a position corresponding to a frame that is lower than this at the begining (end also checked)
+        
         for i_lap in np.unique(lap): 
             y = np.flatnonzero(lap == i_lap) # index for the current lap
 
@@ -873,10 +877,10 @@ class ImagingSessionData:
                         lap_frames_pos = self.frame_pos[iframes]
                         lap_frames_events = self.events[:,iframes]
                         # print(self.n_laps, np.min(lap_frames_pos), np.max(lap_frames_pos))
-                        if (np.min(lap_frames_pos) > 200):
+                        if (np.min(lap_frames_pos) > imaging_min_position):
                             add_ImLap = False
                             print('Late-start lap found, first position:', np.min(lap_frames_pos), 'in lap', self.n_laps, 'in corridor', corridor)
-                        if (np.max(lap_frames_pos) < (self.corridor_length_roxel - 200)):
+                        if (np.max(lap_frames_pos) < (self.corridor_length_roxel - imaging_min_position)):
                             add_ImLap = False
                             print('Early end lap found, last position:', np.max(lap_frames_pos), 'in lap', self.n_laps, 'in corridor', corridor)
                     else:
@@ -1496,7 +1500,7 @@ class ImagingSessionData:
                         calculate_shuffles = True
                     else :
                         if (verbous > 0):
-                            print ('P-values successfully read from the saved file.')
+                            print(data_folder + '/' + shuffle_filename, 'successfully loaded')
 
                 else :# fill in the P-value array
                     if (verbous > 0):
