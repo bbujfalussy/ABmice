@@ -16,6 +16,7 @@ from scipy.interpolate import interp1d
 import scipy.stats
 import csv
 from matplotlib.patches import Polygon
+from matplotlib.patches import Rectangle
 import sys
 from sys import version_info
 from sys import platform
@@ -3560,7 +3561,7 @@ def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME, verbose = F
     if verbose:
         print('min recorded trigger length:',TRIGGER_DATA[used_index,2])
         
-    if TRIGGER_DATA[used_index,2] > 0.700:
+    if TRIGGER_DATA[used_index,2] > 0.800:
 
         sys.exit('Warning! No short enough trigger in this recording! Unable to locate imaging')
     else:
@@ -3611,14 +3612,14 @@ def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME, verbose = F
                 difi = np.zeros(TRIGGER_DATA.shape[0])
                 for i in range(TRIGGER_DATA.shape[0]):
                     start = TRIGGER_DATA[i,0] + imstart_time
-                    patch = matplotlib.patches.Rectangle((start, y1), TRIGGER_DATA[i,2] ,sidey , color='darkred')
+                    patch = Rectangle((start, y1), TRIGGER_DATA[i,2] ,sidey , color='darkred')
                     ax.add_patch(patch)
                     difi[i] = TRIGGER_DATA[i,0] - trigger_starts[i_log_first_match+i-used_index] + imstart_time
                 # squares for logged triggers
                 y1 = 1
                 sidey = 5
                 for i in range(trigger_starts.size): 
-                    patch = matplotlib.patches.Rectangle((trigger_starts[i], y1), trigger_lengths[i] ,sidey , color='darkblue')
+                    patch = Rectangle((trigger_starts[i], y1), trigger_lengths[i] ,sidey , color='darkblue')
                     ax.add_patch(patch)
 
                 ax2 = ax.twinx()
