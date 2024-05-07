@@ -3432,7 +3432,7 @@ def HolmBonf(P_vec, p_val):
 
 
 ##########################################################
-def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME):
+def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME, verbose = False, show_plots = False):
     # 1. TRIGGER_DATA  = np.array, 4 x N_triggers, each row is the 1. start time, 2, end time, duration, ITT
     # 2. select only trigger data with ITT > 10 ms
     # 3. find the shortest trigger
@@ -3460,7 +3460,8 @@ def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME):
     for line in log_file_reader:             
         trigger_log_starts.append(float(line[0])) # seconds
         trigger_log_lengths.append(float(line[1]) / 1000) # convert to seconds from ms
-    print('trigger logfile loaded')
+    if verbose:
+        print('trigger logfile loaded')
     trigger_starts = np.array(trigger_log_starts)
     trigger_lengths = np.array(trigger_log_lengths)
 
@@ -3475,7 +3476,9 @@ def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME):
         TRIGGER_VOLTAGE_TIMES.append(float(line[0]) / 1000) # converting it to seconds
     TRIGGER_VOLTAGE=np.array(TRIGGER_VOLTAGE_VALUE)
     TRIGGER_TIMES=np.array(TRIGGER_VOLTAGE_TIMES)
-    print('trigger voltage signal loaded')
+    
+    if verbose:
+        print('trigger voltage signal loaded')
     
     ## find trigger start and end times
     rise_index=np.nonzero((TRIGGER_VOLTAGE[0:-1] < 1)&(TRIGGER_VOLTAGE[1:]>= 1))[0]+1#+1 needed otherwise we are pointing to the index just before the trigger
@@ -3486,17 +3489,22 @@ def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME):
     
     # pairing rises with falls
     if (RISE_T[0]>FALL_T[0]):
-        print('deleting first fall')
         FALL_T = np.delete(FALL_T,0)
+        
+        if verbose:
+            print('deleting first fall')
+
     if (RISE_T[-1] > FALL_T[-1]):
-        print('deleting last rise')
         RISE_T=np.delete(RISE_T,-1)
+        
+        if verbose:
+            print('deleting last rise')
+
 
     if np.size(RISE_T)!=np.size(FALL_T):
-        print(np.size(RISE_T),np.size(FALL_T))
-        print('trigger ascending and desending edges do not match! unable to locate imaging part')
-        imstart_time = np.nan
-        return imstart_time
+        print('rises:', np.size(RISE_T), 'falls:',np.size(FALL_T))
+        sys.exit('trigger ascending and desending edges do not match! unable to locate imaging part')
+
 
     #1) filling up TRIGGER_DATA array:
     #TRIGGER_DATA: 0. start time, 1. end time, 2. duration, 3.ITT, 4. index
@@ -3514,25 +3522,47 @@ def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME):
     TRIGGER_DATA_sub=TRIGGER_DATA[valid_indexes,:]
     
     #3) find the valid shortest trigger
-    minindex = np.argmin(TRIGGER_DATA_sub[:,2])
-    used_index = int(TRIGGER_DATA_sub[minindex][4])
-    n_extra_indexes = min(5,TRIGGER_DATA.shape[0]-used_index)
-    print('triggers after:',TRIGGER_DATA.shape[0]-used_index)
-    print('n_extra_indexes',n_extra_indexes)
+    lengths = np.copy(TRIGGER_DATA_sub[:,2])
+    index = 0
+    if lengths.size < 2:
+        sys.exit('Less than 2 valid triggers - Unable to locate imaging!')
+    if lengths.size < 6:
+        used_index = int(TRIGGER_DATA_sub[0][4])
+        n_extra_indexes = min(5,TRIGGER_DATA.shape[0]-used_index)
+    else:
+        while True:
+            minindex = np.argmin(lengths)
+            used_index = int(TRIGGER_DATA_sub[minindex][4])
+            n_extra_indexes = min(5,TRIGGER_DATA.shape[0]-used_index)
+            if n_extra_indexes < 5:
+                lengths[minindex] = np.max(lengths)+1
+                index+=1
+                if index == lengths.size:
+                    sys.exit('Unable to locate imaging! Not enough checkable valid triggers!')
+            else:
+                break
+    if verbose:
+        print('triggers after:',TRIGGER_DATA.shape[0]-used_index)
+        print('n_extra_indexes',n_extra_indexes)
+        print('used_index', used_index)
 
     #4)find the candidate trigger times
     candidate_log_indexes = []
     for i in range(len(trigger_lengths)):
         if (abs(trigger_lengths[i] - TRIGGER_DATA[used_index][2]) < 0.007):
             candidate_log_indexes.append(i)
-    print('candidate log indexes',candidate_log_indexes)
+            
+    if verbose:
+        print('candidate log indexes',candidate_log_indexes)
 
     #5)check the next ITT-s, locate relevant behavior
-    print('min recorded trigger length:',TRIGGER_DATA[used_index,2])
-    if TRIGGER_DATA[used_index,2] > 0.600:
-        print('Warning! No short enough trigger in this recording! Unable to locate imaging')
-        imstart_time = np.nan
-        # return
+    i_log_first_match = np.nan
+    if verbose:
+        print('min recorded trigger length:',TRIGGER_DATA[used_index,2])
+        
+    if TRIGGER_DATA[used_index,2] > 0.700:
+
+        sys.exit('Warning! No short enough trigger in this recording! Unable to locate imaging')
     else:
         match_found = False
         for i in range(len(candidate_log_indexes)):    
@@ -3544,19 +3574,64 @@ def LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME):
                     dif_mes = TRIGGER_DATA[used_index+j,0] - TRIGGER_DATA[used_index,0]
                     delta = abs(dif_log - dif_mes)
                     difs.append(delta)
-                # print(trigger_log_lengths[candidate_log_indexes[i]],'log',dif_log,'mes', dif_mes,'dif', delta)
+
                 if max(difs) < 0.009:
-                    if match_found==False:                      
-                        lap_time_of_first_frame = trigger_starts[log_reference_index] - TRIGGER_DATA[used_index,0]
-                        print('relevant behavior located, lap time of the first frame:',lap_time_of_first_frame, ', log reference index:', log_reference_index)
+                    if match_found==False:  
                         match_found=True
+                        i_log_first_match = log_reference_index
+                        lap_time_of_first_frame = trigger_starts[log_reference_index] - TRIGGER_DATA[used_index,0]
+                        print('relevant behavior located, lap time of the first frame:', np.round(lap_time_of_first_frame, 6))
+                       
+                        if verbose:
+                            print('log reference index:', log_reference_index)
+                            
                     else:
                         print('Warning! More than one trigger matches found!')
             else:
-                print('slight warning - testing some late candidates failed')
+                print('   slight warning - testing some late candidates failed')
 
         if match_found==True:
             imstart_time = lap_time_of_first_frame
+            #show alignment and recorded trigegr if specified
+            if show_plots:
+                plt.figure('recorded trigger')
+                plt.plot(TRIGGER_VOLTAGE_TIMES, TRIGGER_VOLTAGE_VALUE, label = 'recorded trigger')
+                plt.scatter(RISE_T, np.ones_like(RISE_T)*2, c='r', label = 'detected trigger starts')
+                plt.scatter(FALL_T, np.ones_like(FALL_T)*1, c='k', label = 'detected trigger ends')
+                plt.xlabel('sec')
+                plt.ylabel('mV')
+                plt.legend()
+                plt.show()
+                
+                # plt.figure('alignment')
+                fig, ax = plt.subplots()
+                y1 = 7
+                sidey = 5
+                # ax = plt.gca()
+                difi = np.zeros(TRIGGER_DATA.shape[0])
+                for i in range(TRIGGER_DATA.shape[0]):
+                    start = TRIGGER_DATA[i,0] + imstart_time
+                    patch = matplotlib.patches.Rectangle((start, y1), TRIGGER_DATA[i,2] ,sidey , color='darkred')
+                    ax.add_patch(patch)
+                    difi[i] = TRIGGER_DATA[i,0] - trigger_starts[i_log_first_match+i-used_index] + imstart_time
+                # squares for logged triggers
+                y1 = 1
+                sidey = 5
+                for i in range(trigger_starts.size): 
+                    patch = matplotlib.patches.Rectangle((trigger_starts[i], y1), trigger_lengths[i] ,sidey , color='darkblue')
+                    ax.add_patch(patch)
+
+                ax2 = ax.twinx()
+                ax2.plot(TRIGGER_DATA[:,0] + imstart_time, difi, c = 'orange')
+                ax2.tick_params(axis='y', labelcolor='orange')
+                ax2.set_ylabel('delay in sec')
+                
+                ax.set_xlim(trigger_starts[0],trigger_starts[-1])
+                ax.set_ylim(0,13)
+                ax.set_xlabel('sec')
+                
+                plt.show()
+                
         else:
             sys.exit('no precise trigger mach found: need to refine code or check device')
     return imstart_time
