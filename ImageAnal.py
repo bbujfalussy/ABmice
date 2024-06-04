@@ -1885,7 +1885,7 @@ class ImagingSessionData:
             for zone in range(len(zone_starts[i])):
                 left = zone_starts[i][zone] * self.N_pos_bins             
                 right = zone_ends[i][zone] * self.N_pos_bins
-                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                 axs[0,i].add_patch(polygon)
                 
         fig.suptitle(sort_title)
@@ -2110,7 +2110,7 @@ class ImagingSessionData:
                     for i_zone in range(len(zone_starts)):
                         left = zone_starts[i_zone] * nbins             
                         right = zone_ends[i_zone] * nbins              
-                        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                         ax[0,cor_index].add_patch(polygon)
                         # print('adding reward zone to the ', cor_index, 'th corridor, ', self.corridors[cor_index+1])
 
@@ -2203,7 +2203,7 @@ class ImagingSessionData:
                 for i_zone in range(len(zone_starts)):
                     left = zone_starts[i_zone] * nbins             
                     right = zone_ends[i_zone] * nbins              
-                    polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                    polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                     ax[0,cor_index].add_patch(polygon)
 
         plt.show(block=False)
@@ -2307,7 +2307,7 @@ class ImagingSessionData:
                         right = np.round(self.ImLaps[lap].zones[1,0] * self.corridor_length_roxel, -1) - 4.5
 
                         if (average):
-                            polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color=reward_zone_color, alpha=0.15)
+                            polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color=reward_zone_color, alpha=0.15)
                             axs[row,0].add_patch(polygon)
                         else :
                             axs[row,0].vlines((left, right), ymin=bottom, ymax=top, colors=reward_zone_color, lw=3)
@@ -2317,7 +2317,7 @@ class ImagingSessionData:
                                 left = np.round(self.ImLaps[lap].zones[0,i] * self.corridor_length_roxel, -1) - 4.5 # threshold of the position rounded to 10s - this is what LabView does
                                 right = np.round(self.ImLaps[lap].zones[1,i] * self.corridor_length_roxel, -1) - 4.5
                                 if (average):
-                                    polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color=reward_zone_color, alpha=0.15)
+                                    polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color=reward_zone_color, alpha=0.15)
                                     axs[row,0].add_patch(polygon)
                                 else :
                                     axs[row,0].vlines((left, right), ymin=bottom, ymax=top, colors=reward_zone_color, lw=3)
@@ -3292,13 +3292,13 @@ class Lap_ImData:
         left = self.zones[0,0] * self.corridor_length_roxel
         right = self.zones[1,0] * self.corridor_length_roxel
 
-        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
         ax_top.add_patch(polygon)
         if (self.n_zones > 1):
             for i in range(1, np.shape(self.zones)[1]):
                 left = self.zones[0,i] * self.corridor_length_roxel
                 right = self.zones[1,i] * self.corridor_length_roxel
-                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                 ax_top.add_patch(polygon)
 
         ax2 = ax_top.twinx()
@@ -3364,13 +3364,13 @@ class Lap_ImData:
         left = self.zones[0,0] * self.corridor_length_roxel
         right = self.zones[1,0] * self.corridor_length_roxel
 
-        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
         ax_bottom.add_patch(polygon)
         if (self.n_zones > 1):
             for i in range(1, np.shape(self.zones)[1]):
                 left = self.zones[0,i] * self.corridor_length_roxel
                 right = self.zones[1,i] * self.corridor_length_roxel
-                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                 ax_bottom.add_patch(polygon)
 
         ax2 = ax_bottom.twinx()

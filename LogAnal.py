@@ -230,13 +230,13 @@ class Lap_Data:
         left = self.zones[0,0] * self.corridor_length_roxel
         right = self.zones[1,0] * self.corridor_length_roxel
 
-        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
         ax.add_patch(polygon)
         if (self.n_zones > 1):
             for i in range(1, np.shape(self.zones)[1]):
                 left = self.zones[0,i] * self.corridor_length_roxel
                 right = self.zones[1,i] * self.corridor_length_roxel
-                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed= True, color='green', alpha=0.15)
                 ax.add_patch(polygon)
 
         ax2 = plt.twinx()
@@ -276,12 +276,12 @@ class Lap_Data:
         # left = zones[0,0] * 3500
         # right = zones[1,0] * 3500
 
-        # polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+        # polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
         # if (np.shape(zones)[1] > 1):
         #     for i in range(1, np.shape(zones)[1]):
         #         left = zones[0,i] * 3500
         #         right = zones[1,i] * 3500
-        #         polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+        #         polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
         #         ax.add_patch(polygon)
 
 
@@ -324,13 +324,13 @@ class Lap_Data:
         left = self.zones[0,0] * self.corridor_length_roxel
         right = self.zones[1,0] * self.corridor_length_roxel
 
-        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
         ax_bottom.add_patch(polygon)
         if (self.n_zones > 1):
             for i in range(1, np.shape(self.zones)[1]):
                 left = self.zones[0,i] * self.corridor_length_roxel
                 right = self.zones[1,i] * self.corridor_length_roxel
-                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                 ax_bottom.add_patch(polygon)
 
         ax2 = ax_bottom.twinx()
@@ -632,7 +632,7 @@ class Session:
                             n_valid = n_valid + 1
                         i_lap = i_lap + 1
                     maxspeed = min(maxspeed, 60)
-                    P_correct = np.round(np.float(n_correct) / np.float(n_valid), 3)
+                    P_correct = np.round(float(n_correct) / float(n_valid), 3)
                     
                     avespeed = nan_divide(avespeed, n_lap_bins, n_lap_bins > 0)
                     axs[row,0].step(self.Laps[lap].bincenters, avespeed, where='mid', color=speed_color)
@@ -654,14 +654,14 @@ class Session:
                         left = self.Laps[lap].zones[0,0] * self.corridor_length_roxel
                         right = self.Laps[lap].zones[1,0] * self.corridor_length_roxel
 
-                        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                        polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                         axs[row,0].add_patch(polygon)
                         n_zones = np.shape(self.Laps[lap].zones)[1]
                         if (n_zones > 1):
                             for i in range(1, np.shape(self.Laps[lap].zones)[1]):
                                 left = self.Laps[lap].zones[0,i] * self.corridor_length_roxel
                                 right = self.Laps[lap].zones[1,i] * self.corridor_length_roxel
-                                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), True, color='green', alpha=0.15)
+                                polygon = Polygon(np.array([[left, bottom], [left, top], [right, top], [right, bottom]]), closed = True, color='green', alpha=0.15)
                                 axs[row,0].add_patch(polygon)
                         else: # we look for anticipatory licking tests
                             P_statement = ', anticipatory P value not tested'
