@@ -2209,7 +2209,7 @@ class ImagingSessionData:
         plt.show(block=False)
 
 
-    def plot_session(self, selected_laps=None, average=True, filename=None):
+    def plot_session(self, selected_laps=None, average=True, filename=None, only_imaged = False):
         ## plot the behavioral data during one session. 
             # - speed
             # - lick rate
@@ -2219,8 +2219,12 @@ class ImagingSessionData:
 
         ## find the number of different corridors
         if (selected_laps is None):
-            selected_laps = np.arange(self.n_laps)
-            add_anticipatory_test = True
+            if only_imaged:
+                selected_laps = self.i_Laps_ImData
+                add_anticipatory_test = False
+            else:
+                selected_laps = np.arange(self.n_laps)
+                add_anticipatory_test = True
         else:
             add_anticipatory_test = False
 
