@@ -12,6 +12,7 @@ import datetime
 import time
 import os
 import pickle
+import warnings
 import scipy.stats
 from scipy.interpolate import interp1d   
 import matplotlib.pyplot as plt
@@ -26,8 +27,7 @@ from Corridors import *
 
 def nan_divide(a, b, where=True):
     'division function that returns np.nan where the division is not defined'
-    N = len(a)
-    x = np.zeros(N)
+    x = np.zeros_like(a)
     x.fill(np.nan)
     x = np.divide(a, b, out=x, where=where)
     return x
@@ -431,6 +431,20 @@ class Session:
 
         self.test_anticipatory()
 
+        # behavior score -- call calc_behavior_score to fill up
+        self.Ps_correct = {}  # corridor_id : P_correct
+        self.VSEL_NORMALIZATION = -0.45  # speed selectivity normalization constant: negative so that speed selectivity is "good" if close to 1 instead of -1, just like lick
+        self.speed_index = {}
+        self.lick_index = {}
+        self.speed_selectivity = np.nan
+        self.lick_selectivity = np.nan
+        self.behavior_score = None
+        self.behavior_score_components = {}
+
+        self.preRZ = {}  # pre reward zone
+        self.ctrlZ = {}  # control zone (1000 roxels before preRZ)
+        self.crossZ = [] # cross-corridor zone (for selectivities)
+
     def get_lapdata(self, datapath, date_time, name, task):
 
         time_array=[]
@@ -576,8 +590,146 @@ class Session:
                     k = k + 1
                 self.anticipatory.append(anticipatory_Licks(lick_rates[0,:], lick_rates[1,:], corridor_types[row]))
 
+    def calc_correct_lap_proportions(self, corrA, corrB, selected_laps=None):
+        if selected_laps is None:
+            selected_laps = np.arange(self.n_laps)
+        if (self.n_laps > 0):
+            for corridor in [corrA, corrB]: # for each corridor...
+                if corridor == corrB and corrB is None:
+                    self.Ps_correct[corridor] = np.nan
+                    continue
+                ids_all = np.where(self.i_corridors == corridor)
+                ids = np.intersect1d(ids_all, selected_laps)
+                if (len(ids) > 2):
+                    n_correct = 0
+                    n_valid = 0
+                    for lap in ids:
+                        if self.Laps[lap].mode != 1:  # only valid laps should be included
+                            continue
+                        n_correct = n_correct + self.Laps[lap].correct
+                        n_valid = n_valid + 1
+                    P_correct = np.round(nan_divide(float(n_correct), float(n_valid)),3)
+                    self.Ps_correct[corridor] = P_correct
 
-    def plot_session(self, selected_laps=None):
+    def calc_speed_and_lick_selectivity(self, corrA, corrB, selected_laps=None):
+        print("calculating speed and lick selectivities, behavior score...")
+        if selected_laps is None:
+            selected_laps = np.arange(self.n_laps)
+        if (self.n_laps > 0):
+            nbins = len(self.Laps[0].bincenters)
+
+            avg_speeds_by_corridor = {}
+            avg_licks_by_corridor = {}
+            for i_cor, corridor in enumerate([corrA, corrB]):
+                if corridor == corrB and corrB is None:
+                    self.preRZ[corrB] = [np.nan, np.nan]
+                    self.ctrlZ[corrB] = [np.nan, np.nan]
+                    self.crossZ = [np.nan, np.nan]
+                    self.speed_index[corrB] = np.nan
+                    self.lick_index[corrB] = np.nan
+                    continue
+                ids_all = np.where(self.i_corridors == corridor)
+                ids = np.intersect1d(ids_all, selected_laps)
+
+                if (len(ids) > 2):
+                    ########################################
+                    ## speed
+                    speed_matrix = np.zeros((len(ids), nbins))
+                    i_lap = 0
+                    for lap in ids:
+                        if (self.Laps[lap].mode == 1): # only use the lap if it was a valid lap
+                            speed_matrix[i_lap,:] =  np.round(self.Laps[lap].ave_speed, 2)
+                        else:
+                            speed_matrix[i_lap,:] =  np.nan
+                        i_lap = i_lap + 1
+
+                    ########################################
+                    ## lick
+                    lick_matrix = np.zeros((len(ids), nbins))
+                    i_lap = 0
+                    for lap in ids:
+                        if (self.Laps[lap].mode == 1): # only use the lap if it was a valid lap
+                            lick_matrix[i_lap,:] =  np.round(self.Laps[lap].lick_rate, 2)
+                        i_lap = i_lap + 1
+
+                    # 5 bins long region right before reward zone
+                    RZ_start_bin = np.round(self.corridor_list.corridors[corridor].reward_zone_starts * self.N_pos_bins)
+                    preRZ_ub = int(RZ_start_bin) - 1
+                    preRZ_lb = preRZ_ub - 5
+                    roxel_per_bin = self.corridor_length_roxel / self.N_pos_bins
+                    self.preRZ[corridor] = [preRZ_lb * roxel_per_bin, preRZ_ub * roxel_per_bin]
+
+                    # 5 bins long control region 1000 roxels before preRZ region
+                    ctrl_ub = preRZ_lb - int(np.round(1000 / self.corridor_length_roxel * self.N_pos_bins))
+                    ctrl_lb = ctrl_ub - 5
+                    self.ctrlZ[corridor] = [ctrl_lb * roxel_per_bin, ctrl_ub * roxel_per_bin]
+
+                    # within-corridor selectivities
+                    with warnings.catch_warnings(action="ignore"):
+                        avg_speed_preRZ = np.nanmean(speed_matrix[:, preRZ_lb:preRZ_ub], axis=1)
+                        avg_speed_ctrl = np.nanmean(speed_matrix[:,ctrl_lb:ctrl_ub], axis=1)
+                        speed_selectivity_laps = nan_divide(avg_speed_preRZ - avg_speed_ctrl,
+                                                            avg_speed_preRZ + avg_speed_ctrl)
+                        self.speed_index[corridor] = speed_selectivity_laps
+
+                        avg_lick_preRZ = np.nanmean(lick_matrix[:, preRZ_lb:preRZ_ub], axis=1)
+                        avg_lick_ctrl = np.nanmean(lick_matrix[:, ctrl_lb:ctrl_ub], axis=1)
+                        lick_selectivity_laps = nan_divide(avg_lick_preRZ - avg_lick_ctrl,
+                                                            avg_lick_preRZ + avg_lick_ctrl)
+                        self.lick_index[corridor] = lick_selectivity_laps
+
+                    # cross-corridor selectivities
+                    RZ_corrA_start_bin = np.round(self.corridor_list.corridors[corrA].reward_zone_starts * self.N_pos_bins)
+                    corrA_preRZ_ub = int(RZ_corrA_start_bin) - 1
+                    corrA_preRZ_lb = corrA_preRZ_ub - 5
+                    self.crossZ = [corrA_preRZ_lb * roxel_per_bin, corrA_preRZ_ub * roxel_per_bin]
+
+                    avg_speed_corrA_preRZ = np.nanmean(speed_matrix[:, corrA_preRZ_lb:corrA_preRZ_ub])
+                    avg_speeds_by_corridor[corridor] = avg_speed_corrA_preRZ
+                    avg_lick_corrA_preRZ = np.nanmean(lick_matrix[:, corrA_preRZ_lb:corrA_preRZ_ub])
+                    avg_licks_by_corridor[corridor] = avg_lick_corrA_preRZ
+            with warnings.catch_warnings(action="ignore"):  # nan_divide throws RuntimeWarning but it works as
+                if corrB is not None:
+                    self.speed_selectivity = nan_divide(avg_speeds_by_corridor[corrA] - avg_speeds_by_corridor[corrB],
+                                                        avg_speeds_by_corridor[corrA] + avg_speeds_by_corridor[corrB])
+                    self.lick_selectivity = nan_divide(avg_licks_by_corridor[corrA] - avg_licks_by_corridor[corrB],
+                                                       avg_licks_by_corridor[corrA] + avg_licks_by_corridor[corrB])
+                else:
+                    self.speed_selectivity = np.nan
+                    self.lick_selectivity = np.nan
+
+    def calc_behavior_score(self, corrA, corrB=None, selected_laps=None):
+        if selected_laps is None:
+            selected_laps = np.arange(self.n_laps)
+        corridor_types = np.unique(self.i_corridors[selected_laps])
+        if corrB is not None:
+            if corrA not in corridor_types and corrB not in corridor_types:
+                raise Exception(f"corridors {corrA} and/or {corrB} not found in session, aborting behavior score calc.")
+        else:
+            if corrA not in corridor_types:
+                raise Exception(f"corridor {corrA} not found in session, aborting behavior score calc.")
+
+        self.calc_correct_lap_proportions(corrA, corrB, selected_laps)
+        self.calc_speed_and_lick_selectivity(corrA, corrB, selected_laps)
+
+        mean_vidx_A = np.round(np.nanmean(self.speed_index[corrA]), 2)
+        mean_vidx_B = np.round(np.nanmean(self.speed_index[corrB]), 2)
+        mean_lidx_A = np.round(np.nanmean(self.lick_index[corrA]), 2)
+        mean_lidx_B = np.round(np.nanmean(self.lick_index[corrB]), 2)
+        self.behavior_score_components = {
+            f"P correct ({corrA})": self.Ps_correct[corrA],
+            f"P correct ({corrB})": self.Ps_correct[corrB],
+            f"Speed index ({corrA})": mean_vidx_A / self.VSEL_NORMALIZATION,
+            f"Speed index ({corrB})": mean_vidx_B / self.VSEL_NORMALIZATION,
+            "Speed selectivity": float(self.speed_selectivity / self.VSEL_NORMALIZATION),
+            f"Lick index ({corrA})": mean_lidx_A,
+            f"Lick index ({corrB})": mean_lidx_B,
+            "Lick selectivity": float(self.lick_selectivity),
+        }
+        self.behavior_score = sum(list(self.behavior_score_components.values()))
+
+    def plot_session(self, corrA=None, corrB=None, selected_laps=None):
+        # corrA, corrB are needed for behavior score calculation
         ## find the number of different corridors
         if (selected_laps is None):
             selected_laps = np.arange(self.n_laps)
@@ -594,7 +746,10 @@ class Session:
             rowHeight = 2
             if (nrow > 4):
                 rowHeight = 1.5
-            fig, axs = plt.subplots(nrows=nrow, ncols=1, figsize=(8,rowHeight*nrow), squeeze=False)
+            if self.behavior_score is not None:
+                fig, axs = plt.subplots(nrows=nrow, ncols=2, figsize=(8,rowHeight*nrow), squeeze=False, width_ratios=[3,1])
+            else:
+                fig, axs = plt.subplots(nrows=nrow, ncols=1, figsize=(8,rowHeight*nrow), squeeze=False)
             # plt.figure(figsize=(5,2*nrow))
             speed_color = cmap(30)
             speed_color_trial = (speed_color[0], speed_color[1], speed_color[2], (0.05))
@@ -645,6 +800,56 @@ class Session:
                             plot_title = str(int(n_laps)) + ' (' + str(int(n_correct)) + ')' + ' laps in corridor ' + str(int(corridor_types[row])) + ', P-correct: ' + str(P_correct)
                     else:
                         plot_title = str(int(n_laps)) + ' (' + str(int(n_correct)) + ')' + ' laps in corridor ' + str(int(corridor_types[row])) + ', P-correct: ' + str(P_correct)
+
+                    if self.behavior_score is not None:
+                        if corridor_types[row] == corrA:
+                            cells = [[f"P correct ({corrA})", f"{self.behavior_score_components[f'P correct ({corrA})']:.2f}", ],
+                                     [f"Speed index ({corrA})", f"{self.behavior_score_components[f'Speed index ({corrA})']:.2f}",],
+                                     [f"Lick index ({corrA})", f"{self.behavior_score_components[f'Lick index ({corrA})']:.2f}"]]
+                            cell_colors = [["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],]
+                            table = axs[row,1].table(cellText=cells,
+                                              colLabels=["component", "score"],
+                                              cellColours=cell_colors,
+                                              colColours=["beige", "beige"],
+                                              loc="center")
+                            table.auto_set_font_size(False)
+                            table.auto_set_column_width([0,1])
+                            axs[row,1].axis('off')
+
+                            ymin, ymax = axs[row,0].get_ylim()
+                            axs[row, 0].plot(self.preRZ[corrA], [ymax-ymax*0.05, ymax-ymax*0.05], linewidth=3, color="red")
+                            axs[row, 0].plot(self.ctrlZ[corrA], [ymax - ymax * 0.05, ymax - ymax * 0.05], linewidth=3, color="red")
+                            axs[row, 0].plot(self.crossZ, [ymax - ymax * 0.10, ymax - ymax * 0.10], linewidth=3, color="green")
+                        elif corrB is not None and corridor_types[row] == corrB:
+                            cells = [[f"P correct ({corrB})", f"{self.behavior_score_components[f'P correct ({corrB})']:.2f}", ],
+                                     [f"Speed index ({corrB})", f"{self.behavior_score_components[f'Speed index ({corrB})']:.2f}",],
+                                     [f"Lick index ({corrB})", f"{self.behavior_score_components[f'Lick index ({corrB})']:.2f}"],
+                                     ["Speed selectivity", f"{self.behavior_score_components['Speed selectivity']:.2f}", ],
+                                     ["Lick selectivity", f"{self.behavior_score_components['Lick selectivity']:.2f}", ],
+                                     ["BEHAVIOR SCORE", f"{self.behavior_score:.2f}", ],]
+                            cell_colors = [["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],
+                                           ["aquamarine", "aquamarine"],]
+                            table = axs[row,1].table(cellText=cells,
+                                              colLabels=["component", "score"],
+                                              cellColours=cell_colors,
+                                              colColours=["beige", "beige"],
+                                              loc="center")
+                            table.auto_set_font_size(False)
+                            table.auto_set_column_width([0,1])
+                            axs[row,1].axis('off')
+
+                            ymin, ymax = axs[row, 0].get_ylim()
+                            axs[row, 0].plot(self.preRZ[corrB], [ymax-ymax*0.05, ymax-ymax*0.05], linewidth=3, color="red")
+                            axs[row, 0].plot(self.ctrlZ[corrB], [ymax - ymax * 0.05, ymax - ymax * 0.05], linewidth=3, color="red")
+                            axs[row, 0].plot(self.crossZ, [ymax - ymax * 0.10, ymax - ymax * 0.10], linewidth=3, color="green")
+                        else:
+                            axs[row,1].set_visible(False)
 
                     ########################################
                     ## reward zones
