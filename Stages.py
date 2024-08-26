@@ -63,15 +63,15 @@ class Stage_collection:
 # Stages for Rita
 ###########################################################################
 ##
-## level		stage 	substage	corridors 		random		next_stage		rule 		condition	name
+## level	stage 	substage	corridors 		random		next_stage		rule 		condition	name
 ##
 ## lick&run	0		a			0				pseudo		1				lick&run	either		pretrain
 ##
-## lick_zone	1		a			1				pseudo		1b				Pavl/Oper  	both		9_cheese		
+## lick_zone 1		a			1				pseudo		1b				Pavl/Oper  	both		9_cheese		
 ## 			1		b			2-4				pseudo		1c				Pavl/Oper  	both		7_cheese		
 ## 			1		c			5-7				pseudo		1d				Pavl/Oper  	both		5_cheese		
 ## 			1		d			8-10			pseudo		1e				Pavl/Oper  	both		3_cheese
-## 			1		e			11				pseudo		2-5				Pavl/Oper  	both		1_cheese
+## 			1		e			11				pseudo		1f				Pavl/Oper  	both		1_cheese
 ##
 ## color 	2		a			12,17			pseudo		6-9 			correct 	correct		R: green (striped)
 ## 	 		3		a			13,16			pseudo		6-9 			correct 	correct		R: purple (striped)
@@ -88,7 +88,7 @@ class Stage_collection:
 ## 	 		12		a			12,15,16,19		pseudo		16				correct 	correct		R: square
 ## 	 		13		a			13,14,17,18		pseudo		17				correct 	correct		R: striped
 ##
-## switching	14		a			12,14,17,19		pseudo		11				correct 	correct		green ->
+## switching 14		a			12,14,17,19		pseudo		11				correct 	correct		green ->
 ## 					b			13,15,16,18		pseudo		11				correct 	correct				 -> purple
 ## 	 		15		a			13,15,16,18		pseudo		12				correct 	correct		purple -> 
 ## 	 				b			12,15,16,19		pseudo		12				correct 	correct				-> square
@@ -100,6 +100,8 @@ class Stage_collection:
 ## reversal	18		a			12,17    		pseudo		18				correct 	correct		reversal 1
 ## 	 				b			12,15    		pseudo		6				correct 	correct		
 ## 	 				c			13,14    		pseudo		7				correct 	correct		
+## lick_zone without mark 19
+##          1       a           20              pseudo      2-5             Pavl/Oper   both        NO_cheese
 ##
 ##
 ##
@@ -117,7 +119,7 @@ class Stage_collection:
 #stage_list = Stage_collection('.', 'contingency_learning')
 #stage_list.add_stage(level='lick&run', stage=0, corridors=[0], next_stage=[1], rule='pretrain', condition='either', name='pretrain')
 #
-#stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11], next_stage=[2,3,4,5], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4])
+#stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11,20], next_stage=[2,3,4,5], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4,5])
 #
 #stage_list.add_stage(level='color      ', stage=2, corridors=[12, 17], next_stage=[6,7,8,9], rule='correct', condition='correct', name='green_(striped)')
 #stage_list.add_stage(level='color      ', stage=3, corridors=[13, 16], next_stage=[6,7,8,9], rule='correct', condition='correct', name='purple_(striped)')

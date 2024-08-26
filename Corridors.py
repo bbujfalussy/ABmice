@@ -166,6 +166,7 @@ class Corridor_list:
 #Cors.add_corridor('green_squared_left', 'RN_wall_squared_green_left_002.png', 'RN_wall_squared_green_right_002.png', 'black_end_wall.png', 'floor_ceiling.png', 'floor_ceiling.png', [5250], reward='Left')
 #Cors.add_corridor('green_squared_right', 'RN_wall_squared_green_left_002.png', 'RN_wall_squared_green_right_002.png', 'black_end_wall.png', 'floor_ceiling.png', 'floor_ceiling.png', [5250])
 #
+#Cors.add_corridor('1_cheese_nocsepp', 'RN_1_cheese_left_nocsepp.png', 'RN_1_cheese_right_nocsepp.png', 'black_end_wall.png', 'floor_ceiling.png', 'floor_ceiling.png', [5250])
 #
 #Cors.print_zones()
 #Cors.print_images()
