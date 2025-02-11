@@ -291,21 +291,21 @@ class Stage_collection:
 
 
 
-# stage_list = Stage_collection('.', 'NearFarLong')
-# stage_list.add_stage(level='lick&run', stage=0, corridors=[0], next_stage=[1], rule='pretrain', condition='either', name='pretrain')
-
-# stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11], next_stage=[2], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4])
-# stage_list.add_stage(level='diff_1', stage=2, corridors=[12, 13, 14, 15], next_stage=[3], rule='Pavlovian', condition='both', name='near-far', substages=[0,0,1,1])
-# stage_list.add_stage(level='1st new', stage=3, corridors=[14,15,17], next_stage=[6], rule='Pavlovian', condition='both', name='near-far+7st-new', substages=[0,0,1])
-# stage_list.add_stage(level='blocks', stage=4, corridors=[14,15,16,18], next_stage=[4], rule='Pavlovian', condition='both', name='near-far-blocks', substages=[0,0,1,2])
-# stage_list.add_stage(level='2 new patt', stage=5, corridors=[14,15,19,20,21,22], next_stage=[5], rule='Pavlovian', condition='both', name='near-far-2x2new', substages=[0,0,1,1,2,2])
-# stage_list.add_stage(level='2nd new', stage=6, corridors=[14,15,23], next_stage=[7], rule='Pavlovian', condition='both', name='near-far+2nd-new', substages=[0,0,1])
-# stage_list.add_stage(level='3dr new', stage=7, corridors=[14,15,24], next_stage=[7], rule='Pavlovian', condition='both', name='near-far+3rd-new', substages=[0,0,1])
-# stage_list.add_stage(level ='block train', stage=8, corridors=[25,26,25,26], next_stage=[8], rule='Pavlovian', condition='both', name='block train', substages=[0,1,2,2])
-# stage_list.add_stage(level ='single corr', stage=9, corridors=[25,26,17,23,24,14,15], next_stage=[9], rule='Pavlovian', condition='both', name='single corr', substages=[0,1,2,3,4,5,6])
-# stage_list.print_table()
-
-# stage_list.write()
+#stage_list = Stage_collection('.', 'NearFarLong')
+#stage_list.add_stage(level='lick&run', stage=0, corridors=[0], next_stage=[1], rule='pretrain', condition='either', name='pretrain')
+#
+#stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11], next_stage=[2], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4])
+#stage_list.add_stage(level='diff_1', stage=2, corridors=[12, 13, 14, 15], next_stage=[3], rule='Pavlovian', condition='both', name='near-far', substages=[0,0,1,1])
+#stage_list.add_stage(level='1st new', stage=3, corridors=[14,15,17], next_stage=[6], rule='Pavlovian', condition='both', name='near-far+7st-new', substages=[0,0,1])
+#stage_list.add_stage(level='blocks', stage=4, corridors=[14,15,16,18], next_stage=[4], rule='Pavlovian', condition='both', name='near-far-blocks', substages=[0,0,1,2])
+#stage_list.add_stage(level='2 new patt', stage=5, corridors=[14,15,19,20,21,22], next_stage=[5], rule='Pavlovian', condition='both', name='near-far-2x2new', substages=[0,0,1,1,2,2])
+#stage_list.add_stage(level='2nd new', stage=6, corridors=[14,15,23], next_stage=[7], rule='Pavlovian', condition='both', name='near-far+2nd-new', substages=[0,0,1])
+#stage_list.add_stage(level='3dr new', stage=7, corridors=[14,15,24], next_stage=[7], rule='Pavlovian', condition='both', name='near-far+3rd-new', substages=[0,0,1])
+#stage_list.add_stage(level ='block train', stage=8, corridors=[25,26,25,26], next_stage=[8], rule='Pavlovian', condition='both', name='block train', substages=[0,1,2,2])
+#stage_list.add_stage(level ='single corr', stage=9, corridors=[25,26,17,23,24,14,15], next_stage=[9], rule='Pavlovian', condition='both', name='single corr', substages=[0,1,2,3,4,5,6])
+#stage_list.print_table()
+#
+#stage_list.write()
 
 #############################################################################
 ### Stages for the morphing experiment of Kata
