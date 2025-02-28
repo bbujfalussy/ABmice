@@ -1863,7 +1863,8 @@ class ImagingSessionData:
             if (normalized):
                 for j in range(ratemap_to_plot.shape[0]):
                     rate_range = max(ratemap_to_plot[j,:]) - min(ratemap_to_plot[j,:])
-                    ratemap_to_plot[j,:] = (ratemap_to_plot[j,:] - min(ratemap_to_plot[j,:])) / rate_range
+                    if rate_range > 0:
+                        ratemap_to_plot[j,:] = (ratemap_to_plot[j,:] - min(ratemap_to_plot[j,:])) / rate_range
             # subplot title
             if ratemap_base == 'spec':
                 title_string = ratemaps_title[i]
