@@ -763,7 +763,7 @@ class ImagingSessionData:
 
             maze_lap = np.unique(maze[y])
             if (len(maze_lap) == 1):
-                corridor = self.all_corridors[int(maze_lap)] # the maze_lap is the index of the available corridors in the given stage
+                corridor = self.all_corridors[maze_lap[0]] # the maze_lap is the index of the available corridors in the given stage
             else:
                 corridor = -1
             # print('corridor in lap ', self.n_laps, ':', corridor)
