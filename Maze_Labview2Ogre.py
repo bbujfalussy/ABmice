@@ -51,18 +51,8 @@ import datetime
 now = datetime.datetime.now()
 print('script started', now.strftime("%Y-%m-%d %H:%M:%S"))
 
-import random
-import ctypes
-import numpy as np
-import pickle
-
-from subprocess import Popen, PIPE, STDOUT
-import subprocess
-
 import Tkinter, tkFileDialog
 import sys
-import os
-
 
 sys.path.append('C:\LuigsNeumann_Treadmill\PyOgre\packages_2.7\ogre\renderer\OGRE')
 from sf_OIS import *
@@ -70,8 +60,7 @@ from sf_OIS import *
 #from openpyxl import Workbook
 #from openpyxl import load_workbook
 sys.path.append('C:\Users\LN-Treadmill\Desktop\MouseData')
-from Corridors import *
-from Stages import *
+from ABmice.Stages import *
 
 import socket #Mate
 
@@ -79,7 +68,6 @@ global wDir
 wDir = os.getcwd()
 
 #import wx
-import re
 
 # sys.path.append(wDir+'\..\..\..\IO\ReadWriteNI')
 # sys.path.append(wDir+'\..\..\..\IO\ReadWriteXLS')

@@ -11,7 +11,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.image as mpimg
 from scipy.optimize import minimize_scalar
-sys.path.append(r'C:\Users\luko.balazs\AppData\Local\Continuum\anaconda3\Lib\site-packages')
 import pandas as pd
 from numba import njit, prange
 from scipy.ndimage import filters
@@ -36,7 +35,7 @@ class ProcessManualRoiData:
         self.excel_file_path = excel_file_path
         self.suite2p_folder = suite2p_folder
         self.save_path = suite2p_folder[0: -1] + 'manual_ROI\\'
-        self.man_image = self.LoadImage()#Todo: létezik-e a file
+        self.man_image = self.LoadImage() #Todo: létezik-e a file
         self.ids = ids
         self.manual_data_excel_file = self.suite2p_folder + 'manual_roi_data.xlsx'
         self.imaging_logfile_name = imaging_logfile_name
