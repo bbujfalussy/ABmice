@@ -5,7 +5,7 @@ Created on Tue Apr 27 18:14:19 2020
 luko.balazs - lukobalazs@gmail.com
 , 
 """
-
+import pathlib
 
 import numpy as np
 import math
@@ -29,10 +29,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 import pandas as pd
 
-from utils import *
-from Stages import *
-from Corridors import *
-from ImShuffle import *
+from abmice.utils import *
+from abmice.Stages import *
+from abmice.Corridors import *
+from abmice.ImShuffle import *
 
 if (platform == 'darwin'):
     csv_kwargs = {'delimiter':' '}
@@ -64,7 +64,9 @@ class ImagingSessionData:
         self.substage_change_time = [0]
         self.data_folder = data_folder
 
-        stagefilename = self.datapath + self.task + '_stages.pkl'
+        self.parent_dir: pathlib.Path = pathlib.Path(__file__).parent
+
+        stagefilename = self.parent_dir / (self.task + '_stages.pkl')
         input_file = open(stagefilename, 'rb')
         if version_info.major == 2:
             self.stage_list = pickle.load(input_file)
@@ -72,7 +74,7 @@ class ImagingSessionData:
             self.stage_list = pickle.load(input_file, encoding='latin1')
         input_file.close()
 
-        corridorfilename = self.datapath + self.task + '_corridors.pkl'
+        corridorfilename = self.parent_dir / (self.task + '_corridors.pkl')
         input_file = open(corridorfilename, 'rb')
         if version_info.major == 2:
             self.corridor_list = pickle.load(input_file)
@@ -490,7 +492,6 @@ class ImagingSessionData:
                         lick_rates[:,k] = np.nan
                     k = k + 1
                 self.anticipatory.append(anticipatory_Licks(lick_rates[0,:], lick_rates[1,:], self.corridors[row]))
-
 
 
     def calc_dF_F(self):

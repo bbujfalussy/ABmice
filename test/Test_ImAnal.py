@@ -24,12 +24,12 @@ TRIGGER_VOLTAGE_FILENAME = suite2p_folder + 'srb059_TSeries-02032021-1011-001_Cy
 
 
 # 3. load all the data - this taks ~20 secs in my computer
-#    def __init__(self, datapath, date_time, name, task, suite2p_folder, TRIGGER_VOLTAGE_FILENAME):
+#    def __init__(self, datapath, date_time, name, task, suite2p_folder, trigger_voltage_filename):
 
 D1 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, TRIGGER_VOLTAGE_FILENAME, speed_threshold=5)#, startendlap=[27, 99])
 try:
 	D1 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, TRIGGER_VOLTAGE_FILENAME, speed_threshold=5)#, startendlap=[27, 99])
-	# D2 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, TRIGGER_VOLTAGE_FILENAME, speed_threshold=5, selected_laps=np.arange(40, 50))#, startendlap=[27, 99])
+	# D2 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, trigger_voltage_filename, speed_threshold=5, selected_laps=np.arange(40, 50))#, startendlap=[27, 99])
 except:
 	print('Loading data failed! Check for errors!')
 

@@ -40,11 +40,11 @@ TRIGGER_VOLTAGE_FILENAME = suite2p_folder + 'rn013_TSeries-03132020-0939-003_Cyc
 
 
 # 3. load all the data - this taks ~20 secs in my computer
-#    def __init__(self, datapath, date_time, name, task, suite2p_folder, TRIGGER_VOLTAGE_FILENAME):
+#    def __init__(self, datapath, date_time, name, task, suite2p_folder, trigger_voltage_filename):
 D1 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, TRIGGER_VOLTAGE_FILENAME)#, startendlap=[27, 99])
 D1.i_Laps_ImData
 
-# D2 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, TRIGGER_VOLTAGE_FILENAME, selected_laps=np.array([140, 141, 142, 143, 144, 145]))
+# D2 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, trigger_voltage_filename, selected_laps=np.array([140, 141, 142, 143, 144, 145]))
 D2 = ImagingSessionData(datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, TRIGGER_VOLTAGE_FILENAME, selected_laps=np.arange(140, 225))
 D2.i_Laps_ImData
 

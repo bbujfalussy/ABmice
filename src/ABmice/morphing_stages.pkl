@@ -1,5 +1,5 @@
 (iStages
-Stage_collection
+StageCollection
 p0
 (dp1
 S'stages'

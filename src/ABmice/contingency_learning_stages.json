@@ -1,0 +1,494 @@
+{
+    "image_path": ".",
+    "num_stages": 19,
+    "name": "contingency_learning",
+    "stages": [
+        {
+            "level": "lick&run",
+            "stage": 0,
+            "corridors": [
+                0
+            ],
+            "next_stage": [
+                1
+            ],
+            "rule": "pretrain",
+            "condition": "either",
+            "name": "pretrain",
+            "random": "pseudo",
+            "N_corridors": 1,
+            "substages": [
+                "a"
+            ]
+        },
+        {
+            "level": "lick_zone",
+            "stage": 1,
+            "corridors": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11
+            ],
+            "next_stage": [
+                2,
+                3,
+                4,
+                5
+            ],
+            "rule": "Pavlovian",
+            "condition": "either",
+            "name": "9 -> 1 lick zone",
+            "random": "pseudo",
+            "N_corridors": 11,
+            "substages": [
+                0,
+                1,
+                1,
+                1,
+                2,
+                2,
+                2,
+                3,
+                3,
+                3,
+                4
+            ]
+        },
+        {
+            "level": "color      ",
+            "stage": 2,
+            "corridors": [
+                12,
+                17
+            ],
+            "next_stage": [
+                6,
+                7,
+                8,
+                9
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "green_(striped)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "color      ",
+            "stage": 3,
+            "corridors": [
+                13,
+                16
+            ],
+            "next_stage": [
+                6,
+                7,
+                8,
+                9
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "purple_(striped)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "color      ",
+            "stage": 4,
+            "corridors": [
+                14,
+                19
+            ],
+            "next_stage": [
+                6,
+                7,
+                8,
+                9
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "green_(square)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "color      ",
+            "stage": 5,
+            "corridors": [
+                15,
+                18
+            ],
+            "next_stage": [
+                6,
+                7,
+                8,
+                9
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "purple_(square)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "pattern ",
+            "stage": 6,
+            "corridors": [
+                12,
+                15
+            ],
+            "next_stage": [
+                13,
+                15
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "square_(purple)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "pattern ",
+            "stage": 7,
+            "corridors": [
+                13,
+                14
+            ],
+            "next_stage": [
+                13,
+                15
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "stripe_(purple)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "pattern ",
+            "stage": 8,
+            "corridors": [
+                16,
+                19
+            ],
+            "next_stage": [
+                13,
+                15
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "square_(green)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "pattern ",
+            "stage": 9,
+            "corridors": [
+                17,
+                18
+            ],
+            "next_stage": [
+                13,
+                15
+            ],
+            "rule": "correct",
+            "condition": "correct",
+            "name": "stripe_(green)",
+            "random": "pseudo",
+            "N_corridors": 2,
+            "substages": [
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "compound",
+            "stage": 10,
+            "corridors": [
+                12,
+                14,
+                17,
+                19
+            ],
+            "next_stage": [
+                14
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "green",
+            "random": "pseudo",
+            "N_corridors": 4,
+            "substages": [
+                "a",
+                "a",
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "compound",
+            "stage": 11,
+            "corridors": [
+                13,
+                15,
+                16,
+                18
+            ],
+            "next_stage": [
+                15
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "purple",
+            "random": "pseudo",
+            "N_corridors": 4,
+            "substages": [
+                "a",
+                "a",
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "compound",
+            "stage": 12,
+            "corridors": [
+                12,
+                15,
+                16,
+                19
+            ],
+            "next_stage": [
+                16
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "square",
+            "random": "pseudo",
+            "N_corridors": 4,
+            "substages": [
+                "a",
+                "a",
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "compound",
+            "stage": 13,
+            "corridors": [
+                13,
+                14,
+                17,
+                18
+            ],
+            "next_stage": [
+                17
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "stripe",
+            "random": "pseudo",
+            "N_corridors": 4,
+            "substages": [
+                "a",
+                "a",
+                "a",
+                "a"
+            ]
+        },
+        {
+            "level": "switching",
+            "stage": 14,
+            "corridors": [
+                12,
+                14,
+                17,
+                19,
+                13,
+                15,
+                16,
+                18
+            ],
+            "next_stage": [
+                11
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "green -> purple",
+            "random": "pseudo",
+            "N_corridors": 8,
+            "substages": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+            ]
+        },
+        {
+            "level": "switching",
+            "stage": 15,
+            "corridors": [
+                13,
+                15,
+                16,
+                18,
+                12,
+                15,
+                16,
+                19
+            ],
+            "next_stage": [
+                12
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "purple -> square",
+            "random": "pseudo",
+            "N_corridors": 8,
+            "substages": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+            ]
+        },
+        {
+            "level": "switching",
+            "stage": 16,
+            "corridors": [
+                12,
+                15,
+                16,
+                19,
+                13,
+                14,
+                17,
+                18
+            ],
+            "next_stage": [
+                13
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "square -> stripe",
+            "random": "pseudo",
+            "N_corridors": 8,
+            "substages": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+            ]
+        },
+        {
+            "level": "switching",
+            "stage": 17,
+            "corridors": [
+                13,
+                14,
+                17,
+                18,
+                12,
+                14,
+                17,
+                19
+            ],
+            "next_stage": [
+                10
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "stripe -> green",
+            "random": "pseudo",
+            "N_corridors": 8,
+            "substages": [
+                0,
+                0,
+                0,
+                0,
+                1,
+                1,
+                1,
+                1
+            ]
+        },
+        {
+            "level": "switching",
+            "stage": 18,
+            "corridors": [
+                12,
+                17,
+                12,
+                15,
+                13,
+                14
+            ],
+            "next_stage": [
+                7
+            ],
+            "rule": "correct",
+            "condition": "both",
+            "name": "reversal 1",
+            "random": "pseudo",
+            "N_corridors": 6,
+            "substages": [
+                0,
+                0,
+                1,
+                1,
+                2,
+                2
+            ]
+        }
+    ]
+}

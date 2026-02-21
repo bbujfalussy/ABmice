@@ -6,7 +6,7 @@ A framework for storing virtual corridor properties for behavioral experiments
 We define a class - Corridor - and the collector class.
 
 """
-
+import io
 import numpy as np
 from string import *
 from sys import version_info
@@ -14,38 +14,53 @@ import os
 import pickle
 
 class Stage:
-	'defining properties of a single experiment stage'
+	"""defining properties of a single experiment stage"""
 	def __init__(self, level, stage, corridors, next_stage, rule, condition, name, substages=0, random='pseudo'):
-		self.level = level
-		self.stage = stage
-		self.corridors = corridors
-		self.next_stage = next_stage
-		self.rule = rule
-		self.condition = condition
-		self.name = name
-		self.random = random
-		self.N_corridors = len(corridors)
+		self.level: str = level
+		self.stage: int = stage
+		self.corridors: list[int] = corridors
+		self.next_stage: str = next_stage
+		self.rule: str = rule
+		self.condition: str = condition
+		self.name: str = name
+		self.random: str = random
+		self.substages: list[str | int] = ['a'] * self.N_corridors if substages else substages
 
-		if substages == 0:
-			self.substages = ['a'] * self.N_corridors
-		else :
-			self.substages = substages
+	def __dict__(self):
+		return {
+			"level": self.level,
+			"stage": self.stage,
+			"corridors": self.corridors,
+			"next_stage": self.next_stage,
+			"rule": self.rule,
+			"condition": self.condition,
+			"name": self.name,
+			"substages": self.substages,
+			"random": self.random,
+		}
+
+	@property
+	def N_corridors(self):
+		return len(self.corridors)
 
 	def print_props(self):
 		s = self.level + '\t stage: ' + str(self.stage)+ '\t substage: ' + str(self.substages) + '\t corridors:' + str(self.corridors) + '\t next stage:' + str(self.next_stage) + '\t rule: ' + str(self.rule) + '\t condition:' + self.condition + '\t name:' + self.name
 		print(s)
 
-class Stage_collection:
-	'class for storing corridor properties'
+class StageCollection:
+	"""class for storing corridor properties"""
+
 	def __init__(self, image_path, experiment_name):
-		self.image_path = image_path
-		self.num_stages = 0
-		self.name = experiment_name
-		self.stages = []
+		self.image_path: str = image_path
+		self.name: str = experiment_name
+		self.stages: list[Stage] = []
+
+	@property
+	def num_stages(self):
+		return len(self.stages)
 
 	def add_stage(self, level, stage, corridors, next_stage, rule, condition, name, substages=0, random='pseudo'):
 		self.stages.append(Stage(level, stage, corridors, next_stage, rule, condition, name, substages=substages, random=random))
-		self.num_stages = self.num_stages + 1
 
 	def print_table(self):
 		ss = 'level \t\t stage \t\t substage \t\t corridors \t next_stage \t rule \t condition \t name \n'
@@ -53,11 +68,29 @@ class Stage_collection:
 		for i in range(self.num_stages):
 			self.stages[i].print_props()
 
-	def write(self):
-		fname = self.image_path + '/' + self.name + '_stages.pkl'
-		f = open(fname, 'wb')
-		pickle.dump(self, f)
-		f.close()
+	def __dict__(self):
+		return {
+			'image_path': self.image_path,
+			'name': self.name,
+			'stages': [dict(stage) for stage in self.stages],
+		}
+
+	@staticmethod
+	def from_json(file: io.TextIOWrapper) -> 'StageCollection':
+		stage_collection = StageCollection(image_path=file['image_path'], experiment_name=file['name'])
+		for stage in file['stages']:
+			stage_collection.add_stage(
+				level=stage['level'],
+				stage=stage['stage'],
+				corridors=stage['corridors'],
+				next_stage=stage['next_stage'],
+				rule=stage['rule'],
+				condition=stage['condition'],
+				name=stage['name'],
+				substages=stage['substages'],
+				random=stage['random'],
+			)
+		return stage_collection
 
 ###########################################################################
 # Stages for Rita
@@ -117,7 +150,7 @@ class Stage_collection:
 ## correct: water is given for correct licking. Only correct choices are counted
 ## float: probability of reward after correct choice
 #
-#stage_list = Stage_collection('.', 'contingency_learning')
+#stage_list = StageCollection('.', 'contingency_learning')
 #stage_list.add_stage(level='lick&run', stage=0, corridors=[0], next_stage=[1], rule='pretrain', condition='either', name='pretrain')
 #
 #stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11,20], next_stage=[2,3,4,5], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4,5])
@@ -184,7 +217,7 @@ class Stage_collection:
 ##
 #
 #
-#stage_list = Stage_collection('./', 'TwoMazes')
+#stage_list = StageCollection('./', 'TwoMazes')
 #stage_list.add_stage(level='pretrain', stage=0, corridors=[0], next_stage=[1], rule='lick&run', condition='either', name='pretrain')
 #
 #stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11], next_stage=[2,3,4,5], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4])
@@ -231,7 +264,7 @@ class Stage_collection:
 ##
 #
 #
-#stage_list = Stage_collection('./', 'NearFar')
+#stage_list = StageCollection('./', 'NearFar')
 #
 #stage_list.add_stage(level='pretrain', stage=0, corridors=[0], next_stage=[1], rule='lick&run', condition='either', name='pretrain')
 #stage_list.add_stage(level='diff_1', stage=1, corridors=[1,2], next_stage=[2], rule='Pavlovian', condition='either', name='all_reward')
@@ -254,7 +287,7 @@ class Stage_collection:
 # # lick_zone	1		a			1				pseudo		1b				Pavl/Oper  	both		9_cheese		
 # #  			1		b			2-4				pseudo		1c				Pavl/Oper  	both		7_cheese		
 # #  			1		c			5-7				pseudo		1d				Pavl/Oper  	both		5_cheese		
-# #  			1		d			8-10			    pseudo		1e				Pavl/Oper  	both		3_cheese
+# #  			1		d			8-10			pseudo		1e				Pavl/Oper  	both		3_cheese
 # #  			1		e			11				pseudo		2				Pavl/Oper  	both		1_cheese
 
 # # diff_1	    2		a			12-13			pseudo		3				Pavl/Oper  	both		2 grey corridors with 6 zones
@@ -291,7 +324,7 @@ class Stage_collection:
 
 
 
-#stage_list = Stage_collection('.', 'NearFarLong')
+#stage_list = StageCollection('.', 'NearFarLong')
 #stage_list.add_stage(level='lick&run', stage=0, corridors=[0], next_stage=[1], rule='pretrain', condition='either', name='pretrain')
 #
 #stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11], next_stage=[2], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4])
@@ -330,7 +363,7 @@ class Stage_collection:
 ## 			9		a			20-25-24		6-2-6		7				operant 	0.9			new_corridor		
 #
 #
-#stage_list = Stage_collection('.', 'morphing')
+#stage_list = StageCollection('.', 'morphing')
 #stage_list.add_stage(level='lick&run', stage=0, corridors=[0], next_stage=[1], rule='pretrain', condition='either', name='pretrain')
 #
 #stage_list.add_stage(level='lick_zone', stage=1, corridors=[1,2,3,4,5,6,7,8,9,10,11], next_stage=[2,3,4,5], rule='Pavlovian', condition='either', name='9 -> 1 lick zone', substages=[0,1,1,1,2,2,2,3,3,3,4])

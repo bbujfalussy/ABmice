@@ -36,7 +36,7 @@ class Corridor:
 		self.reward_zone_starts = np.array(reward_zone_starts) / section_length + zone_shift # relative position of reward zone starts [0, 1]
 		self.reward_zone_ends = self.reward_zone_starts + zone_width / section_length
 
-		if (self.N_zones > 0):
+		if self.N_zones > 0:
 			for i in np.arange(self.N_zones):
 				if self.reward_zone_starts[i] < 0:
 					self.reward_zone_starts[i] = 0
@@ -57,17 +57,20 @@ class Corridor:
 		s = self.name + ' number of reward zones: ' + str(self.N_zones) + ' ' + ', reward zone starts: ' + str(self.reward_zone_starts) + ', zone ends:' + str(self.reward_zone_ends)
 		print(s)
 
+
 class Corridor_list:
-	'class for storing corridor properties'
+	"""class for storing corridor properties"""
 	def __init__(self, image_path, experiment_name):
 		self.image_path = image_path
-		self.num_VRs = 0
 		self.name = experiment_name
 		self.corridors = []
 
+	@property
+	def num_VRs(self):
+		return len(self.corridors)
+
 	def add_corridor(self, name, left_image, right_image, end_image, floor_image, ceiling_image, reward_zone_starts, zone_width=470, reward='Right', length=7168, height=768, width=1024):
 		self.corridors.append(Corridor(name, left_image, right_image, end_image, floor_image, ceiling_image, reward_zone_starts, zone_width, reward, length, height, width))
-		self.num_VRs = self.num_VRs + 1
 
 	def print_images(self):
 		for i in range(self.num_VRs):

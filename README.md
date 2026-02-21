@@ -33,7 +33,7 @@ Stages.py: A framework for defining the behavioral stages in the VR behavioral e
 	Two new object classes are defined: 
 
 		* Stage: stores the properties of a single stage
-		* Stage_collection: contains the Stages that belong to a single experiment.
+		* StageCollection: contains the Stages that belong to a single experiment.
 
 	The stage collection is saved in a python pickle file with the following name: TASK_NAME_stages.pkl It is used by many of the scripts. 
 

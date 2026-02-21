@@ -17,9 +17,9 @@ from scipy.interpolate import interp1d
 import scipy.stats
 import csv
 
-from utils import *
-from Stages import *
-from Corridors import *
+from abmice.utils import *
+from abmice.Stages import *
+from abmice.Corridors import *
 
 ## a function to break a time series into Nbreak sections each at least Lmin long.
 def breakpoints(Nframes, Lmin=500, Nbreak=5, rngD=None):
