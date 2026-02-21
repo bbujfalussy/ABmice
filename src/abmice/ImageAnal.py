@@ -5,10 +5,10 @@ Created on Tue Apr 27 18:14:19 2020
 luko.balazs - lukobalazs@gmail.com
 , 
 """
-import pathlib
+
 
 import numpy as np
-import math
+import json
 from matplotlib import pyplot as plt
 from matplotlib import colors as matcols
 # from pathlib import Path # this only works with python > 3.4, not compatible with 2.7
@@ -28,11 +28,12 @@ from xml.dom import minidom
 from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 import pandas as pd
+import pathlib
 
-from abmice.utils import *
-from abmice.Stages import *
-from abmice.Corridors import *
-from abmice.ImShuffle import *
+from .utils import *
+from .Stages import *
+from .Corridors import *
+from .ImShuffle import *
 
 if (platform == 'darwin'):
     csv_kwargs = {'delimiter':' '}
@@ -43,7 +44,31 @@ else:
 
 class ImagingSessionData:
     'Base structure for both imaging and behaviour data'
-    def __init__(self, datapath, date_time, name, task, suite2p_folder, imaging_logfile_name, TRIGGER_VOLTAGE_FILENAME, sessionID=np.nan, selected_laps=None, speed_threshold=5, randseed=123, elfiz=False, reward_zones=None, spikes_tag='', data_folder='analysed_data'):
+    def __init__(
+            self,
+            datapath,
+            date_time,
+            name,
+            task,
+            suite2p_folder,
+            imaging_logfile_name,
+            TRIGGER_VOLTAGE_FILENAME,
+            sessionID=np.nan,
+            selected_laps=None,
+            speed_threshold=5,
+            randseed=123,
+            elfiz=False,
+            reward_zones=None,
+            spikes_tag='',
+            data_folder='analysed_data',
+            trigger_voltage_path: pathlib.Path = None,
+            action_log_file_path: pathlib.Path = None,
+            trigger_log_file_path: pathlib.Path = None,
+            F_all_path: pathlib.Path = None,
+            spikes_all_path: pathlib.Path = None,
+            is_cell_path: pathlib.Path = None,
+            data_log_file_path: pathlib.Path = None,
+    ):
         self.datapath = datapath
         self.date_time = date_time
         self.name = name
@@ -64,23 +89,21 @@ class ImagingSessionData:
         self.substage_change_time = [0]
         self.data_folder = data_folder
 
+        self.trigger_voltage_path: pathlib.Path | None = trigger_voltage_path
+        self.action_log_file_path: pathlib.Path | None = action_log_file_path
+        self.trigger_log_file_path: pathlib.Path | None  = trigger_log_file_path
+        self.F_all_path: pathlib.Path | None  = F_all_path
+        self.spikes_all_path: pathlib.Path | None  = spikes_all_path
+        self.is_cell_path: pathlib.Path | None  = is_cell_path
+        self.data_log_file_path: pathlib.Path | None  = data_log_file_path
+
         self.parent_dir: pathlib.Path = pathlib.Path(__file__).parent
 
-        stagefilename = self.parent_dir / (self.task + '_stages.pkl')
-        input_file = open(stagefilename, 'rb')
-        if version_info.major == 2:
-            self.stage_list = pickle.load(input_file)
-        elif version_info.major == 3:
-            self.stage_list = pickle.load(input_file, encoding='latin1')
-        input_file.close()
+        with open(self.parent_dir / (self.task + '_stages.json'), 'r') as stages_file:
+            self.stage_list = Stage_collection.from_json(json.load(stages_file))
 
-        corridorfilename = self.parent_dir / (self.task + '_corridors.pkl')
-        input_file = open(corridorfilename, 'rb')
-        if version_info.major == 2:
-            self.corridor_list = pickle.load(input_file)
-        elif version_info.major == 3:
-            self.corridor_list = pickle.load(input_file, encoding='latin1')
-        input_file.close()
+        with open(self.parent_dir / (self.task + '_corridors.json'), 'r') as corridors_file:
+            self.corridor_list = Corridor_list.from_json(json.load(corridors_file))
 
         self.get_stage(self.datapath, self.date_time, self.name, self.task) # reads the stage of the experiment from the log file
         self.all_corridors = np.hstack([0, np.array(self.stage_list.stages[self.stage].corridors)])# we always add corridor 0 - that is the grey zone
@@ -129,7 +152,7 @@ class ImagingSessionData:
                 
         ## matching imaging time with labview time
         self.imstart_time = 0 # the labview time of the first imaging frame
-        self.imstart_time = LocateImaging(trigger_log_file_string, TRIGGER_VOLTAGE_FILENAME)
+        self.imstart_time = LocateImaging(self.trigger_log_file_path or trigger_log_file_string, self.trigger_voltage_path or TRIGGER_VOLTAGE_FILENAME)
 
         ##################################################
         ## loading imaging data
@@ -164,17 +187,17 @@ class ImagingSessionData:
             self.calc_SD_SNR_elfiz()
             self.calc_active_elfiz()
         else :
-            F_string = self.suite2p_folder + 'F.npy'
+            F_string = str(self.suite2p_folder) + 'F.npy'
             # Fneu_string = self.suite2p_folder + 'Fneu.npy'
-            spks_string = self.suite2p_folder + 'spks' + spikes_tag + '.npy'
-            iscell_string = self.suite2p_folder + 'iscell.npy'
+            spks_string = str(self.suite2p_folder) + 'spks' + spikes_tag + '.npy'
+            iscell_string = str(self.suite2p_folder) + 'iscell.npy'
             
-            self.F_all = np.load(F_string) # npy array, N_ROI x N_frames, fluorescence traces of ROIs from suite2p
+            self.F_all = np.load(self.F_all_path or F_string) # npy array, N_ROI x N_frames, fluorescence traces of ROIs from suite2p
             # self.Fneu = np.load(Fneu_string) # npy array, N_ROI x N_frames, fluorescence traces of neuropil from suite2p
-            self.spks_all = np.load(spks_string) # npy array, N_ROI x N_frames, spike events detected from suite2p
-            self.iscell = np.load(iscell_string) # np array, N_ROI x 2, 1st col: binary classified as cell. 2nd P_cell?
-            self.stat_string = self.suite2p_folder + 'stat.npy' # we may load these later if needed
-            self.ops_string = self.suite2p_folder + 'ops.npy'
+            self.spks_all = np.load(self.spikes_all_path or spks_string) # npy array, N_ROI x N_frames, spike events detected from suite2p
+            self.iscell = np.load(self.is_cell_path or iscell_string) # np array, N_ROI x 2, 1st col: binary classified as cell. 2nd P_cell?
+            self.stat_string = str(self.suite2p_folder) + 'stat.npy' # we may load these later if needed
+            self.ops_string = str(self.suite2p_folder) + 'ops.npy'
             print('suite2p data loaded')               
 
             self.frame_times = np.nan # labview coordinates
@@ -392,7 +415,7 @@ class ImagingSessionData:
     def get_stage(self, datapath, date_time, name, task):
         # function that reads the action_log_file and finds the current stage
         action_log_file_string=datapath + 'data/' + name + '_' + task + '/' + date_time + '/' + date_time + '_' + name + '_' + task + '_UserActionLog.txt'
-        action_log_file=open(action_log_file_string, newline='')
+        action_log_file=open(self.action_log_file_path or action_log_file_string, newline='')
         log_file_reader=csv.reader(action_log_file, delimiter=',')
         next(log_file_reader, None)#skip the headers
         for line in log_file_reader:
@@ -492,6 +515,7 @@ class ImagingSessionData:
                         lick_rates[:,k] = np.nan
                     k = k + 1
                 self.anticipatory.append(anticipatory_Licks(lick_rates[0,:], lick_rates[1,:], self.corridors[row]))
+
 
 
     def calc_dF_F(self):
@@ -680,7 +704,7 @@ class ImagingSessionData:
 
         # this could be made much faster by using pandas
         data_log_file_string=datapath + 'data/' + name + '_' + task + '/' + date_time + '/' + date_time + '_' + name + '_' + task + '_ExpStateMashineLog.txt'
-        data_log_file=open(data_log_file_string, newline='')
+        data_log_file=open(self.data_log_file_path or data_log_file_string, newline='')
         log_file_reader=csv.reader(data_log_file, delimiter=',')
         next(log_file_reader, None)#skip the headers
         for line in log_file_reader:

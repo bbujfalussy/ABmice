@@ -73,9 +73,9 @@ class CorridorCollection:
 
 	@staticmethod
 	def from_json(file: io.TextIOWrapper) -> 'CorridorCollection':
-		stage_collection = CorridorCollection(image_path=file['image_path'], experiment_name=file['name'])
+		corridor_collection = CorridorCollection(image_path=file['image_path'], experiment_name=file['name'])
 		for stage in file['corridors']:
-			stage_collection.add_corridor(
+			corridor_collection.add_corridor(
 				name=stage['name'],
 				left_image=stage['left_image'],
 				right_image=stage['right_image'],
@@ -88,4 +88,4 @@ class CorridorCollection:
 				height=stage['height'],
 				reward=stage['reward'],
 			)
-		return stage_collection
+		return corridor_collection

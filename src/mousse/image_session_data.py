@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpl_patches
 
 from .utils import *
-from .stages import Stage
-from .corridors import *
+from .stages import StageCollection
+from .corridors import CorridorCollection
 from .ImShuffle import *
 from .anticipatory_licks import AnticipatoryLicks
 
@@ -25,6 +25,7 @@ class ImagingSessionData:
                     F_all_path: pathlib.Path = None,
                     spikes_all_path: pathlib.Path = None,
                     is_cell_path: pathlib.Path = None,
+                    data_log_file_path: pathlib.Path = None,
                  ):
         self.datapath: pathlib.Path = datapath
         self.date_time = date_time

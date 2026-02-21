@@ -8,9 +8,7 @@ We define a class - Corridor - and the collector class.
 """
 
 import numpy as np
-from string import *
-from sys import version_info
-import os
+import io
 import pickle
 
 class Corridor:
@@ -36,7 +34,7 @@ class Corridor:
 		self.reward_zone_starts = np.array(reward_zone_starts) / section_length + zone_shift # relative position of reward zone starts [0, 1]
 		self.reward_zone_ends = self.reward_zone_starts + zone_width / section_length
 
-		if self.N_zones > 0:
+		if (self.N_zones > 0):
 			for i in np.arange(self.N_zones):
 				if self.reward_zone_starts[i] < 0:
 					self.reward_zone_starts[i] = 0
@@ -57,9 +55,8 @@ class Corridor:
 		s = self.name + ' number of reward zones: ' + str(self.N_zones) + ' ' + ', reward zone starts: ' + str(self.reward_zone_starts) + ', zone ends:' + str(self.reward_zone_ends)
 		print(s)
 
-
 class Corridor_list:
-	"""class for storing corridor properties"""
+	'class for storing corridor properties'
 	def __init__(self, image_path, experiment_name):
 		self.image_path = image_path
 		self.name = experiment_name
@@ -85,6 +82,25 @@ class Corridor_list:
 		f = open(fname, 'wb')
 		pickle.dump(self, f)
 		f.close()
+
+	@staticmethod
+	def from_json(file: io.TextIOWrapper) -> 'Corridor_list':
+		stage_collection = Corridor_list(image_path=file['image_path'], experiment_name=file['name'])
+		for stage in file['corridors']:
+			stage_collection.add_corridor(
+				name=stage['name'],
+				left_image=stage['left_image'],
+				right_image=stage['right_image'],
+				end_image=stage['end_image'],
+				floor_image=stage['floor_image'],
+				ceiling_image=stage['ceiling_image'],
+				reward_zone_starts=stage['reward_zone_starts'],
+				width=stage['width'],
+				length=stage['length'],
+				height=stage['height'],
+				reward=stage['reward'],
+			)
+		return stage_collection
 
 # # # cc = Corridor('RN_1_cheese_left.png', 'RN_1_cheese_right.png', 'black_end_wall.png', 'floor_ceiling.png', 'floor_ceiling.png', [5380])
 # # # Cors.add_corridor('RN_1_cheese_left.png', 'RN_1_cheese_right.png', 'black_end_wall.png', 'floor_ceiling.png', 'floor_ceiling.png', [5380])
