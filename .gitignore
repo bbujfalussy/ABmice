@@ -1,3 +1,5 @@
 .venv
 .idea
 data
+/src/mousse/
+/src/abmice.egg-info/
