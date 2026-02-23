@@ -3,7 +3,7 @@ name = "abmice"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 dependencies = [
     "jupyter>=1.1.1",
     "matplotlib>=3.5.3",
@@ -11,3 +11,8 @@ dependencies = [
     "pandas>=1.1.5",
     "scipy>=1.7.3",
 ]
+
+[[tool.uv.index]]
+name = "abmice"
+url = "https://github.com/krajnyi93/ABmice/"
+index = "https://github.com/krajnyi93/ABmice/"
