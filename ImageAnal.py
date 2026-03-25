@@ -2362,10 +2362,10 @@ class ImagingSessionData:
                                     axs[row,0].plot(self.ImLaps[lap].reward_position, np.ones(len(self.ImLaps[lap].reward_position)) * i_lap + 0.5, 'o', ms=4, color='deepskyblue')
                                 if (len(self.ImLaps[lap].lick_times) > 0):
                                     axs[row,0].plot(self.ImLaps[lap].lick_position, np.ones(len(self.ImLaps[lap].lick_position)) * i_lap + 0.5, 'oC1', ms=1)
-                                    if (len(self.substage_change_laps) > i_sstage):
-                                        if (lap >= self.substage_change_laps[i_sstage]):
-                                            axs[row,0].hlines(i_lap, xmin=0, xmax=self.corridor_length_roxel, colors='crimson', lw=3)
-                                            i_sstage = i_sstage + 1
+                                if (len(self.substage_change_laps) > i_sstage):
+                                    if (lap >= self.substage_change_laps[i_sstage]):
+                                        axs[row,0].hlines(i_lap, xmin=0, xmax=self.corridor_length_roxel, colors='crimson', lw=3)
+                                        i_sstage = i_sstage + 1
                             lick_matrix[i_lap,:] =  np.round(self.ImLaps[lap].lick_rate, 2)
                             nans_lap = np.isnan(self.ImLaps[lap].lick_rate)
                             avelick = nan_add(avelick, self.ImLaps[lap].lick_rate)
