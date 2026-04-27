@@ -28,6 +28,7 @@ from xml.dom import minidom
 from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 import pandas as pd
+import warnings
 
 from utils import *
 from Stages import *
@@ -268,6 +269,24 @@ class ImagingSessionData:
         self.Hainmuller_PCs()
 
         self.test_anticipatory()
+
+        # behavior score and its components
+        self.Ps_correct = {}  # corridor_id : P_correct
+        self.calc_correct_lap_proportions()
+
+        self.VSEL_NORMALIZATION = -0.45  # speed selectivity normalization constant: negative so that speed selectivity is "good" if close to 1 instead of -1, just like lick
+        self.speed_index = {}
+        self.lick_index = {}
+        self.speed_selectivity = np.nan
+        self.lick_selectivity = np.nan
+        self.behavior_score = None
+        self.behavior_score_components = {}
+        self.corridors_with_behavior_score = []
+        self.behavior_table = None
+
+        self.preRZ = {}  # pre reward zone
+        self.ctrlZ = {}  # control zone (1000 roxels before preRZ)
+        self.crossZ = [] # cross-corridor zone (for selectivities)
 
     def get_analysis_ID(self, s2p_ids):
         # map suite2p ids to analysis ids - writes results to console and returns them
@@ -2209,6 +2228,148 @@ class ImagingSessionData:
 
         plt.show(block=False)
 
+    def calc_correct_lap_proportions(self):
+        selected_laps = self.i_Laps_ImData
+        if (self.n_laps > 0):
+            nrow = len(self.corridors)
+            for row in range(nrow): # for each corridor...
+                ids_all = np.where(self.i_corridors == self.corridors[row])
+                ids = np.intersect1d(ids_all, selected_laps)
+                if (len(ids) > 2):
+                    n_correct = 0
+                    n_valid = 0
+                    for lap in ids:
+                        n_correct = n_correct + self.ImLaps[lap].correct
+                        n_valid = n_valid + 1
+                    P_correct = np.round(nan_divide(float(n_correct), float(n_valid)),3)
+                    self.Ps_correct[self.corridors[row]] = P_correct
+
+    def calc_speed_and_lick_selectivity(self, corrA, corrB, selected_laps=None):
+        #np.seterr(all='raise')
+        if selected_laps is None:
+            selected_laps = np.arange(self.n_laps)
+        if (self.n_laps > 0):
+            corridor_types = np.unique(self.i_corridors[selected_laps])
+            nrow = len(corridor_types)
+            nbins = len(self.ImLaps[0].bincenters)
+
+            avg_speeds_by_corridor = {}
+            avg_licks_by_corridor = {}
+            for i_cor, corridor in enumerate([corrA, corrB]):
+                if corridor == corrB and corrB is None:
+                    self.preRZ[corrB] = [np.nan, np.nan]
+                    self.ctrlZ[corrB] = [np.nan, np.nan]
+                    self.crossZ = [np.nan, np.nan]
+                    self.speed_index[corrB] = np.nan
+                    self.lick_index[corrB] = np.nan
+                    continue
+                ids_all = np.where(self.i_corridors == corridor)
+                ids = np.intersect1d(ids_all, selected_laps)
+
+                if (len(ids) > 2):
+                    ########################################
+                    ## speed
+                    speed_matrix = np.zeros((len(ids), nbins))
+                    i_lap = 0
+                    for lap in ids:
+                        if (self.ImLaps[lap].mode == 1): # only use the lap if it was a valid lap
+                            speed_matrix[i_lap,:] =  np.round(self.ImLaps[lap].ave_speed, 2)
+                        else:
+                            speed_matrix[i_lap,:] =  np.nan
+                        i_lap = i_lap + 1
+
+                    ########################################
+                    ## lick
+                    lick_matrix = np.zeros((len(ids), nbins))
+                    i_lap = 0
+                    for lap in ids:
+                        if (self.ImLaps[lap].mode == 1): # only use the lap if it was a valid lap
+                            lick_matrix[i_lap,:] =  np.round(self.ImLaps[lap].lick_rate, 2)
+                        i_lap = i_lap + 1
+
+                    # 5 bins long region right before reward zone
+                    RZ_start_bin = np.round(self.corridor_list.corridors[corridor].reward_zone_starts * self.N_pos_bins)
+                    preRZ_ub = int(RZ_start_bin-1)
+                    preRZ_lb = preRZ_ub - 5
+                    roxel_per_bin = self.corridor_length_roxel / self.N_pos_bins
+                    self.preRZ[corridor] = [preRZ_lb * roxel_per_bin, preRZ_ub * roxel_per_bin]
+
+                    # 5 bins long control region 1000 roxels before preRZ region
+                    ctrl_ub = preRZ_lb - int(np.round(1000 / self.corridor_length_roxel * self.N_pos_bins))
+                    ctrl_lb = ctrl_ub - 5
+                    self.ctrlZ[corridor] = [ctrl_lb * roxel_per_bin, ctrl_ub * roxel_per_bin]
+
+                    # within-corridor selectivities
+                    avg_speed_preRZ = np.nanmean(speed_matrix[:, preRZ_lb:preRZ_ub], axis=1)
+                    avg_speed_ctrl = np.nanmean(speed_matrix[:,ctrl_lb:ctrl_ub], axis=1)
+                    speed_selectivity_laps = nan_divide(avg_speed_preRZ - avg_speed_ctrl,
+                                                        avg_speed_preRZ + avg_speed_ctrl)
+                    self.speed_index[corridor] = speed_selectivity_laps
+
+                    avg_lick_preRZ = np.nanmean(lick_matrix[:, preRZ_lb:preRZ_ub], axis=1)
+                    avg_lick_ctrl = np.nanmean(lick_matrix[:, ctrl_lb:ctrl_ub], axis=1)
+                    lick_selectivity_laps = nan_divide(avg_lick_preRZ - avg_lick_ctrl,
+                                                        avg_lick_preRZ + avg_lick_ctrl)
+                    self.lick_index[corridor] = lick_selectivity_laps
+
+                    # cross-corridor selectivities
+                    RZ_corrA_start_bin = np.round(self.corridor_list.corridors[corrA].reward_zone_starts * self.N_pos_bins)
+                    corrA_preRZ_ub = int(RZ_corrA_start_bin) - 1
+                    corrA_preRZ_lb = corrA_preRZ_ub - 5
+                    self.crossZ = [corrA_preRZ_lb * roxel_per_bin, corrA_preRZ_ub * roxel_per_bin]
+
+                    avg_speed_corrA_preRZ = np.nanmean(speed_matrix[:, corrA_preRZ_lb:corrA_preRZ_ub])
+                    avg_speeds_by_corridor[corridor] = avg_speed_corrA_preRZ
+                    avg_lick_corrA_preRZ = np.nanmean(lick_matrix[:, corrA_preRZ_lb:corrA_preRZ_ub])
+                    avg_licks_by_corridor[corridor] = avg_lick_corrA_preRZ
+            with warnings.catch_warnings(): # nan_divide throws RuntimeWarning but it works as
+                warnings.simplefilter("ignore")
+                if corrB is not None:
+                    self.speed_selectivity = nan_divide(avg_speeds_by_corridor[corrA] - avg_speeds_by_corridor[corrB],
+                                                        avg_speeds_by_corridor[corrA] + avg_speeds_by_corridor[corrB])
+                    self.lick_selectivity = nan_divide(avg_licks_by_corridor[corrA] - avg_licks_by_corridor[corrB],
+                                                       avg_licks_by_corridor[corrA] + avg_licks_by_corridor[corrB])
+                else:
+                    self.speed_selectivity = np.nan
+                    self.lick_selectivity = np.nan
+
+    def calculate_behavior_score(self, corrA, corrB, selected_laps=None):
+        if selected_laps is None:
+            selected_laps = np.arange(self.n_laps)
+        corridor_types = np.unique(self.i_corridors[selected_laps])
+        if corrB is not None:
+            if corrA not in corridor_types and corrB not in corridor_types:
+                raise Exception("corridors"+str(corrA)+" and/or "+str(corrB)+" not found in session, aborting behavior score calc.")
+        else:
+            if corrA not in corridor_types:
+                raise Exception("corridor"+str(corrA)+" not found in session, aborting behavior score calc.")
+
+        with warnings.catch_warnings(): # to drop "mean of empty slice"-like RuntimeWarnings
+            warnings.simplefilter("ignore")
+
+            self.calc_speed_and_lick_selectivity(corrA, corrB, selected_laps)
+            mean_vidx_A = np.round(np.nanmean(self.speed_index[corrA]), 2)
+            mean_vidx_B = np.round(np.nanmean(self.speed_index[corrB]), 2)
+            mean_lidx_A = np.round(np.nanmean(self.lick_index[corrA]), 2)
+            mean_lidx_B = np.round(np.nanmean(self.lick_index[corrB]), 2)
+            self.behavior_score_components = {
+                "P correct ("+str(corrA)+")": self.Ps_correct[corrA],
+                "P correct ("+str(corrB)+")": self.Ps_correct[corrB],
+                "Speed index ("+str(corrA)+")": mean_vidx_A / self.VSEL_NORMALIZATION,
+                "Speed index ("+str(corrB)+")": mean_vidx_B / self.VSEL_NORMALIZATION,
+                "Speed selectivity": float(self.speed_selectivity / self.VSEL_NORMALIZATION),
+                "Lick index ("+str(corrA)+")": mean_lidx_A,
+                "Lick index ("+str(corrB)+")": mean_lidx_B,
+                "Lick selectivity": float(self.lick_selectivity),
+            }
+            self.behavior_score = sum(list(self.behavior_score_components.values()))
+            if corrA not in self.corridors_with_behavior_score:
+                self.corridors_with_behavior_score.append(corrA)
+            if corrB not in self.corridors_with_behavior_score:
+                self.corridors_with_behavior_score.append(corrB)
+
+            self.behavior_table = pd.DataFrame([self.behavior_score_components])
+            self.behavior_table["BEHAVIOR SCORE"] = self.behavior_score
 
     def plot_session(self, selected_laps=None, average=True, filename=None, only_imaged = False):
         ## plot the behavioral data during one session. 
@@ -2239,12 +2400,18 @@ class ImagingSessionData:
                 rowHeight = 1.5
             # plt.figure(figsize=(5,2*nrow))
 
+            if self.behavior_score is None:
+                ncols = 1
+                scale = 1
+            else:
+                ncols = 2
+                scale = 1.5
             if (average):
                 reward_zone_color = 'green'
-                fig, axs = plt.subplots(nrows=nrow, ncols=1, figsize=(8,rowHeight*nrow), squeeze=False)
+                fig, axs = plt.subplots(nrows=nrow, ncols=ncols, figsize=(scale*8,rowHeight*nrow), squeeze=False)
             else:
                 reward_zone_color = 'fuchsia'
-                fig, axs = plt.subplots(nrows=nrow, ncols=1, figsize=(8,rowHeight*nrow*3), squeeze=False)
+                fig, axs = plt.subplots(nrows=nrow, ncols=ncols, figsize=(scale*8,rowHeight*nrow*3), squeeze=False)
 
             speed_color = cmap(30)
             speed_color_trial = (speed_color[0], speed_color[1], speed_color[2], (0.05))
@@ -2302,6 +2469,60 @@ class ImagingSessionData:
                             plot_title = str(int(n_laps)) + ' (' + str(int(n_correct)) + ')' + ' laps in corridor ' + str(int(corridor_types[row])) + ', P-correct: ' + str(P_correct)
                     else:
                         plot_title = str(int(n_laps)) + ' (' + str(int(n_correct)) + ')' + ' laps in corridor ' + str(int(corridor_types[row])) + ', P-correct: ' + str(P_correct)
+
+                    if self.behavior_score is not None:
+                        corr = corridor_types[row]
+                        is_last_corr = row == len(corridor_types)-1
+                        if corr in self.corridors_with_behavior_score and not is_last_corr:
+                            cells = [["P correct ("+str(corr)+")", np.round(self.behavior_score_components['P correct ('+str(corr)+")"],2),],
+                                     ["Speed index ("+str(corr)+")", np.round(self.behavior_score_components['Speed index ('+str(corr)+")"],2),],
+                                     ["Lick index ("+str(corr)+")", np.round(self.behavior_score_components['Lick index ('+str(corr)+")"],2)]]
+                            cell_colors = [["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],]
+                            table = axs[row,1].table(cellText=cells,
+                                              colLabels=["component", "score"],
+                                              cellColours=cell_colors,
+                                              colColours=["beige", "beige"],
+                                              loc="center")
+                            table.auto_set_font_size(False)
+                            table.auto_set_column_width([0,1])
+                            axs[row,1].axis('off')
+
+                            if average:
+                                ymin, ymax = axs[row,0].get_ylim()
+                                axs[row, 0].plot(self.preRZ[corr], [ymax-ymax*0.05, ymax-ymax*0.05], linewidth=3, color="red")
+                                axs[row, 0].plot(self.ctrlZ[corr], [ymax - ymax * 0.05, ymax - ymax * 0.05], linewidth=3, color="red")
+                                axs[row, 0].plot(self.crossZ, [ymax - ymax * 0.10, ymax - ymax * 0.10], linewidth=3, color="green")
+                        elif corr in self.corridors_with_behavior_score and is_last_corr:
+                            cells = [["P correct ("+str(corr)+")", np.round(self.behavior_score_components['P correct ('+str(corr)+")"],2),],
+                                     ["Speed index ("+str(corr)+")", np.round(self.behavior_score_components['Speed index ('+str(corr)+")"],2),],
+                                     ["Lick index ("+str(corr)+")", np.round(self.behavior_score_components['Lick index ('+str(corr)+")"],2)],
+                                     ["Speed selectivity", np.round(self.behavior_score_components['Speed selectivity'],2)],
+                                     ["Lick selectivity", np.round(self.behavior_score_components['Lick selectivity'],2)],
+                                     ["BEHAVIOR SCORE", np.round(self.behavior_score,2)]]
+                            cell_colors = [["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],
+                                           ["white", "white"],
+                                           ["aquamarine", "aquamarine"],]
+                            table = axs[row,1].table(cellText=cells,
+                                              colLabels=["component", "score"],
+                                              cellColours=cell_colors,
+                                              colColours=["beige", "beige"],
+                                              loc="center")
+                            table.auto_set_font_size(False)
+                            table.auto_set_column_width([0,1])
+                            axs[row,1].axis('off')
+
+                            if average:
+                                ymin, ymax = axs[row, 0].get_ylim()
+                                axs[row, 0].plot(self.preRZ[corr], [ymax-ymax*0.05, ymax-ymax*0.05], linewidth=3, color="red")
+                                axs[row, 0].plot(self.ctrlZ[corr], [ymax - ymax * 0.05, ymax - ymax * 0.05], linewidth=3, color="red")
+                                axs[row, 0].plot(self.crossZ, [ymax - ymax * 0.10, ymax - ymax * 0.10], linewidth=3, color="green")
+                        else:
+                            axs[row,1].set_visible(False)
 
                     ########################################
                     ## reward zones
